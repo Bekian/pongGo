@@ -22,7 +22,7 @@ type pos struct {
 // ball struct
 type ball struct {
 	pos    // basically inherits pos struct
-	radius int
+	radius float32
 	xv     float32 // x and y velocities
 	yv     float32
 	color  color
@@ -34,7 +34,7 @@ func (ball *ball) draw(pixels []byte) {
 	for y := -ball.radius; y < ball.radius; y++ {
 		for x := -ball.radius; x < ball.radius; x++ {
 			if x*x+y*y < ball.radius*ball.radius { //avoiding sqroot bc its expensive
-				setPixel(int(ball.x)+x, int(ball.y)+y, ball.color, pixels)
+				setPixel(int(ball.x+x), int(ball.y+y), ball.color, pixels)
 			}
 		}
 	}
@@ -42,26 +42,31 @@ func (ball *ball) draw(pixels []byte) {
 
 // updating the ball
 // computes new position, and collision logic
+// TODO: fix bug where ball is behind paddle and gets stuck
+// i think the solution is within the paddle collision logic
 func (ball *ball) update(leftPaddle, rightPaddle *paddle) {
+	// update ball position
 	ball.x += ball.xv
 	ball.y += ball.yv
-
-	if int(ball.y)-ball.radius < 0 || int(ball.y)+ball.radius > winHeight {
+	// if ball hits top or bottom boundry then invert y velocity to bounce
+	if ball.y-ball.radius < 0 || int(ball.y+ball.radius) > winHeight {
 		ball.yv *= -1
 	}
+	// if ball hits either left and right walls then reset position
 	if ball.x < 0 || int(ball.x) > winWidth {
 		ball.x = float32(winWidth) / 2
 		ball.y = float32(winHeight) / 2
 	}
 
-	if int(ball.x) < int(leftPaddle.x)+leftPaddle.w/2 {
-		if int(ball.y) > int(leftPaddle.y)-leftPaddle.h/2 && int(ball.y) < int(leftPaddle.y)+leftPaddle.h/2 {
+	// if the balls position is inside the left paddle
+	if ball.x-ball.radius < leftPaddle.x+leftPaddle.w/2 {
+		if ball.y > leftPaddle.y-leftPaddle.h/2 && ball.y < leftPaddle.y+leftPaddle.h/2 {
 			ball.xv *= -1
 		}
 	}
-
-	if int(ball.x) > int(rightPaddle.x)-rightPaddle.w/2 {
-		if int(ball.y) > int(rightPaddle.y)-rightPaddle.h/2 && int(ball.y) < int(rightPaddle.y)+rightPaddle.h/2 {
+	// same as above but for right paddle
+	if ball.x+ball.radius > rightPaddle.x-rightPaddle.w/2 {
+		if ball.y > rightPaddle.y-rightPaddle.h/2 && ball.y < rightPaddle.y+rightPaddle.h/2 {
 			ball.xv *= -1
 		}
 	}
@@ -69,18 +74,18 @@ func (ball *ball) update(leftPaddle, rightPaddle *paddle) {
 
 type paddle struct {
 	pos
-	w     int
-	h     int
+	w     float32
+	h     float32
 	color color
 }
 
 // drawing the paddle
 func (paddle *paddle) draw(pixels []byte) {
-	startX := int(paddle.x) - paddle.w/2
-	startY := int(paddle.y) - paddle.h/2
+	startX := int(paddle.x - paddle.w/2)
+	startY := int(paddle.y - paddle.h/2)
 
-	for y := 0; y < paddle.h; y++ {
-		for x := 0; x < paddle.w; x++ {
+	for y := 0; y < int(paddle.h); y++ {
+		for x := 0; x < int(paddle.w); x++ {
 			setPixel(startX+x, startY+y, paddle.color, pixels)
 		}
 	}
@@ -89,9 +94,9 @@ func (paddle *paddle) draw(pixels []byte) {
 // updating the paddle, TODO: implement bounds for moving off the screen
 func (paddle *paddle) update(keyState []uint8) {
 	if keyState[sdl.SCANCODE_UP] != 0 {
-		paddle.y -= 2
+		paddle.y -= 5
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
-		paddle.y += 2
+		paddle.y += 5
 	}
 }
 
@@ -145,7 +150,7 @@ func main() {
 	}
 	defer tex.Destroy()
 	// a byte array that will store our pixels, essentially the screen in variable form before its drawn
-	pixels := make([]byte, winWidth*winHeight*4)
+	pixels := make([]byte, int(winWidth*winHeight)*4)
 	// initializing the game entities
 	player1 := paddle{pos{100, 300}, 20, 100, color{255, 255, 255}}
 	player2 := paddle{pos{700, 300}, 20, 100, color{255, 255, 255}}
