@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"unsafe"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -40,22 +41,25 @@ func (ball *ball) draw(pixels []byte) {
 	}
 }
 
+func getCenter() pos {
+	return pos{float32(winWidth) / 2, float32(winHeight) / 2}
+}
+
 // updating the ball
 // computes new position, and collision logic
 // TODO: fix bug where ball is behind paddle and gets stuck
 // i think the solution is within the paddle collision logic
-func (ball *ball) update(leftPaddle, rightPaddle *paddle) {
+func (ball *ball) update(leftPaddle, rightPaddle *paddle, elapsedTime float32) {
 	// update ball position
-	ball.x += ball.xv
-	ball.y += ball.yv
+	ball.x += ball.xv * elapsedTime
+	ball.y += ball.yv * elapsedTime
 	// if ball hits top or bottom boundry then invert y velocity to bounce
 	if ball.y-ball.radius < 0 || int(ball.y+ball.radius) > winHeight {
 		ball.yv *= -1
 	}
 	// if ball hits either left and right walls then reset position
 	if ball.x < 0 || int(ball.x) > winWidth {
-		ball.x = float32(winWidth) / 2
-		ball.y = float32(winHeight) / 2
+		ball.pos = getCenter()
 	}
 
 	// if the balls position is inside the left paddle
@@ -76,6 +80,7 @@ type paddle struct {
 	pos
 	w     float32
 	h     float32
+	speed float32
 	color color
 }
 
@@ -92,11 +97,11 @@ func (paddle *paddle) draw(pixels []byte) {
 }
 
 // updating the paddle, TODO: implement bounds for moving off the screen
-func (paddle *paddle) update(keyState []uint8) {
+func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
 	if keyState[sdl.SCANCODE_UP] != 0 {
-		paddle.y -= 5
+		paddle.y -= paddle.speed * elapsedTime
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
-		paddle.y += 5
+		paddle.y += paddle.speed * elapsedTime
 	}
 }
 
@@ -152,15 +157,19 @@ func main() {
 	// a byte array that will store our pixels, essentially the screen in variable form before its drawn
 	pixels := make([]byte, int(winWidth*winHeight)*4)
 	// initializing the game entities
-	player1 := paddle{pos{100, 300}, 20, 100, color{255, 255, 255}}
-	player2 := paddle{pos{700, 300}, 20, 100, color{255, 255, 255}}
+	player1 := paddle{pos{100, 300}, 20, 100, 5, color{255, 255, 255}}
+	player2 := paddle{pos{700, 300}, 20, 100, 5, color{255, 255, 255}}
 	ball := ball{pos{float32(winWidth) / 2, float32(winHeight) / 2}, 20, 2, 2, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
+	var frameStart time.Time
+	var elapsedTime float32
+
 	// Main loop
 	running := true
 	for running {
+		frameStart = time.Now()
 
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
@@ -173,9 +182,9 @@ func main() {
 		clear(pixels)
 
 		//updates
-		player1.update(keyState)
-		player2.update(keyState)
-		ball.update(&player1, &player2)
+		player1.update(keyState, elapsedTime)
+		player2.update(keyState, elapsedTime)
+		ball.update(&player1, &player2, elapsedTime)
 
 		// Draw the objects
 		player1.draw(pixels)
@@ -187,6 +196,8 @@ func main() {
 		renderer.Copy(tex, nil, nil)
 		renderer.Present()
 		// ~60fps
-		sdl.Delay(16)
+
+		elapsedTime = float32(time.Duration(time.Since(frameStart).Seconds()))
+		sdl.Delay(16 - uint32(elapsedTime))
 	}
 }
