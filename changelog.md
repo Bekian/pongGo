@@ -17,3 +17,6 @@
     - Fixed several values to be more aligned with the tutorial, still no pong. F
     - Fixed the issue with the game not updating, it had to do with the timing at the bottom of the file.
     - Added frame smoothing?
+
+## Sept. 28th '23
+    - Added window collisions for paddles

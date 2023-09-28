@@ -55,6 +55,8 @@ func (ball *ball) update(leftPaddle, rightPaddle *paddle, elapsedTime float32) {
 	ball.x += ball.xv * elapsedTime
 	ball.y += ball.yv * elapsedTime
 	// if ball hits top or bottom boundry then invert y velocity to bounce
+	// left side of or is the bottom of the ball
+	// right side of or is the top of the ball
 	if ball.y-ball.radius < 0 || int(ball.y+ball.radius) > winHeight {
 		ball.yv *= -1
 	}
@@ -100,14 +102,20 @@ func (paddle *paddle) draw(pixels []byte) {
 
 // updating the paddle, TODO: implement bounds for moving off the screen
 func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
-	fmt.Printf("%+v\n", *&paddle.speed)
-	if keyState[sdl.SCANCODE_UP] != 0 {
+	fmt.Printf("paddle speed: %+v\n", *&paddle.speed)
+	// add or subtract the paddle velocity to the position to move the paddle
+	// if the paddles position is at the top of the window, it will no longer go up
+	// and the same for the bottom of the window,
+	// basically, if the paddle is at the bottom or top of the screen you cannot go any further in that respective direction
+	// but you can still go the opposite direction
+	if keyState[sdl.SCANCODE_UP] != 0 && !(paddle.y-paddle.h/2 < 0) {
 		paddle.y -= paddle.speed * elapsedTime
-	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
+	} else if keyState[sdl.SCANCODE_DOWN] != 0 && !(paddle.y+paddle.h/2 > float32(winHeight)) {
 		paddle.y += paddle.speed * elapsedTime
 	}
 }
 
+// unbeatable cpu player that cannot lose
 func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
 	paddle.y = ball.y
 }
@@ -133,6 +141,7 @@ func setPixel(x, y int, c color, pixels []byte) {
 
 // main gameloop
 func main() {
+	//// INIT Window
 	// initializing sdl
 	err := sdl.Init(sdl.INIT_EVERYTHING)
 	if err != nil {
@@ -161,6 +170,8 @@ func main() {
 		return
 	}
 	defer tex.Destroy()
+	//// INIT Window
+
 	// a byte array that will store our pixels, essentially the screen in variable form before its drawn
 	pixels := make([]byte, int(winWidth*winHeight)*4)
 
@@ -168,14 +179,14 @@ func main() {
 	// PLAYER INIT
 	player1 := paddle{pos{50, 300}, 20, 100, 300, color{255, 255, 255}}
 	player2 := paddle{pos{float32(winWidth) - 50, 300}, 20, 100, 300, color{255, 255, 255}}
-	ball := ball{getCenter(), 20, 300, 300, color{255, 255, 255}}
+	ball := ball{getCenter(), 20, 0, 0, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
 	var frameStart time.Time
 	var elapsedTime float32
 
-	// Main loop
+	//// Main game loop
 	running := true
 	for running {
 		frameStart = time.Now()
@@ -191,9 +202,9 @@ func main() {
 		clear(pixels)
 
 		// Log current positions
-		fmt.Println("Player 1 position:", player1.pos)
-		fmt.Println("Player 2 position:", player2.pos)
-		fmt.Println("Ball position:", ball.pos)
+		// fmt.Println("Player 1 position:", player1.pos)
+		// fmt.Println("Player 2 position:", player2.pos)
+		// fmt.Println("Ball position:", ball.pos)
 
 		//updates
 		player1.update(keyState, elapsedTime)
@@ -219,4 +230,11 @@ func main() {
 		}
 
 	}
+	//// main game loop
 }
+
+// KNOWN BUGS:
+// collision error where ball and cpu player meet and both go off screen
+// collision error where ball gets stuck behind player and enters a "caught" state and bounces between the player and their respective goal and doesnt reset the ball position
+// collision error where ball phases through cpu players paddle
+// collision error where ball phases through ceiling and floor
