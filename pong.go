@@ -47,8 +47,6 @@ func getCenter() pos {
 
 // updating the ball
 // computes new position, and collision logic
-// TODO: fix bug where ball is behind paddle and gets stuck
-// i think the solution is within the paddle collision logic
 func (ball *ball) update(leftPaddle, rightPaddle *paddle, elapsedTime float32) {
 	// update ball position
 	ball.x += ball.xv * elapsedTime
@@ -90,8 +88,9 @@ func (paddle *paddle) draw(pixels []byte) {
 	startY := int(paddle.y - paddle.h/2)
 
 	for y := 0; y < int(paddle.h); y++ {
+		currentY := startY + y
 		for x := 0; x < int(paddle.w); x++ {
-			setPixel(startX+x, startY+y, paddle.color, pixels)
+			setPixel(startX+x, currentY, paddle.color, pixels)
 		}
 	}
 }
@@ -103,6 +102,10 @@ func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
 		paddle.y += paddle.speed * elapsedTime
 	}
+}
+
+func (paddle *paddle) aiUpdate(ball *ball, elapsedTime float32) {
+	paddle.y = ball.y
 }
 
 // utility function to clear the whole screen of pixels before drawing
@@ -156,10 +159,12 @@ func main() {
 	defer tex.Destroy()
 	// a byte array that will store our pixels, essentially the screen in variable form before its drawn
 	pixels := make([]byte, int(winWidth*winHeight)*4)
+
 	// initializing the game entities
-	player1 := paddle{pos{100, 300}, 20, 100, 5, color{255, 255, 255}}
-	player2 := paddle{pos{700, 300}, 20, 100, 5, color{255, 255, 255}}
-	ball := ball{pos{float32(winWidth) / 2, float32(winHeight) / 2}, 20, 2, 2, color{255, 255, 255}}
+	// PLAYER INIT
+	player1 := paddle{pos{50, 300}, 20, 100, 300, color{255, 255, 255}}
+	player2 := paddle{pos{float32(winWidth) - 50, 300}, 20, 100, 300, color{255, 255, 255}}
+	ball := ball{getCenter(), 20, 400, 400, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
