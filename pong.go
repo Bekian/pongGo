@@ -48,6 +48,9 @@ func getCenter() pos {
 // updating the ball
 // computes new position, and collision logic
 func (ball *ball) update(leftPaddle, rightPaddle *paddle, elapsedTime float32) {
+	// log ball current speed
+	fmt.Printf("%+v %+v\n", *&ball.xv, *&ball.yv)
+
 	// update ball position
 	ball.x += ball.xv * elapsedTime
 	ball.y += ball.yv * elapsedTime
@@ -97,6 +100,7 @@ func (paddle *paddle) draw(pixels []byte) {
 
 // updating the paddle, TODO: implement bounds for moving off the screen
 func (paddle *paddle) update(keyState []uint8, elapsedTime float32) {
+	fmt.Printf("%+v\n", *&paddle.speed)
 	if keyState[sdl.SCANCODE_UP] != 0 {
 		paddle.y -= paddle.speed * elapsedTime
 	} else if keyState[sdl.SCANCODE_DOWN] != 0 {
@@ -186,9 +190,14 @@ func main() {
 		// Update object positions
 		clear(pixels)
 
+		// Log current positions
+		fmt.Println("Player 1 position:", player1.pos)
+		fmt.Println("Player 2 position:", player2.pos)
+		fmt.Println("Ball position:", ball.pos)
+
 		//updates
 		player1.update(keyState, elapsedTime)
-		player2.update(keyState, elapsedTime)
+		player2.aiUpdate(&ball, elapsedTime)
 		ball.update(&player1, &player2, elapsedTime)
 
 		// Draw the objects
@@ -202,7 +211,8 @@ func main() {
 		renderer.Present()
 		// ~60fps
 
-		elapsedTime = float32(time.Duration(time.Since(frameStart).Seconds()))
-		sdl.Delay(16 - uint32(elapsedTime))
+		elapsedTime = float32(time.Since(frameStart).Seconds())
+		sdl.Delay(16) // Fix to delay: convert elapsedTime to milliseconds
+
 	}
 }
