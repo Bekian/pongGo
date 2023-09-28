@@ -168,7 +168,7 @@ func main() {
 	// PLAYER INIT
 	player1 := paddle{pos{50, 300}, 20, 100, 300, color{255, 255, 255}}
 	player2 := paddle{pos{float32(winWidth) - 50, 300}, 20, 100, 300, color{255, 255, 255}}
-	ball := ball{getCenter(), 20, 400, 400, color{255, 255, 255}}
+	ball := ball{getCenter(), 20, 300, 300, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -212,7 +212,11 @@ func main() {
 		// ~60fps
 
 		elapsedTime = float32(time.Since(frameStart).Seconds())
-		sdl.Delay(16) // Fix to delay: convert elapsedTime to milliseconds
+		// frame smoothing?
+		if elapsedTime < .005 {
+			sdl.Delay(5 - uint32(elapsedTime/1000.0))
+			elapsedTime = float32(time.Since(frameStart).Seconds())
+		}
 
 	}
 }
