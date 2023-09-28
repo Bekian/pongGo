@@ -21,3 +21,6 @@
 ## Sept. 28th '23
     - Added window collisions for paddles
     - Rebuilt pong for update
+    - Added notes 
+    - Updated speed values so the ball is faster
+    - Rebuilt pong for update

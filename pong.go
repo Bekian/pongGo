@@ -179,7 +179,7 @@ func main() {
 	// PLAYER INIT
 	player1 := paddle{pos{50, 300}, 20, 100, 300, color{255, 255, 255}}
 	player2 := paddle{pos{float32(winWidth) - 50, 300}, 20, 100, 300, color{255, 255, 255}}
-	ball := ball{getCenter(), 20, 0, 0, color{255, 255, 255}}
+	ball := ball{getCenter(), 20, 200, 200, color{255, 255, 255}}
 
 	keyState := sdl.GetKeyboardState()
 
@@ -238,3 +238,8 @@ func main() {
 // collision error where ball gets stuck behind player and enters a "caught" state and bounces between the player and their respective goal and doesnt reset the ball position
 // collision error where ball phases through cpu players paddle
 // collision error where ball phases through ceiling and floor
+
+// cpu players collision bug is related to the ball phasing through the ceiling and floor since their y positions are matched
+// i think the balls weird collision bug is related to the collisions of the ball being treated as a circle when it should be treated as a square
+
+// TODO: change ball collision to compute the balls physics as if it were a square instead of a ball
