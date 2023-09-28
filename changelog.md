@@ -20,3 +20,4 @@
 
 ## Sept. 28th '23
     - Added window collisions for paddles
+    - Rebuilt pong for update
