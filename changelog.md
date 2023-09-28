@@ -15,3 +15,4 @@
 ## Sept. 27th '23
     - Added more time dependent functions
     - Fixed several values to be more aligned with the tutorial, still no pong. F
+    - Fixed the issue with the game not updating, it had to do with the timing at the bottom of the file.
