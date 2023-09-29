@@ -24,3 +24,4 @@
     - Added notes 
     - Updated speed values so the ball is faster
     - Rebuilt pong for update
+    - Fixed one instance of the collision bug but i still want to improve this
